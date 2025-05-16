@@ -7,6 +7,7 @@ import { WidgetConfig } from '@/components/dashboard/widgets/WidgetConfig';
 import { PublishWidget } from '@/components/dashboard/widgets/PublishWidget';
 import { SensorWidget } from '@/components/dashboard/widgets/SensorWidget';
 import { ChartWidget } from '@/components/dashboard/widgets/ChartWidget';
+import { ActuatorWidget } from '@/components/dashboard/widgets/ActuatorWidget';
 import { useMqttStore } from '@/lib/mqtt';
 import { Button } from '@/components/ui/button';
 import { Kanban, ChevronRight } from 'lucide-react';
@@ -30,6 +31,8 @@ interface WidgetConfig {
   topic: string;
   valuePath?: string;
   unit?: string;
+  actuatorType?: 'switch' | 'toggle' | 'button';
+  pinMode?: 'digital' | 'pwm';
 }
 
 const Index = () => {
@@ -103,10 +106,29 @@ const Index = () => {
             showControls={true}
           />
         );
+      case 'actuator':
+        return (
+          <ActuatorWidget
+            key={widget.id}
+            id={widget.id}
+            title={widget.title}
+            topic={widget.topic}
+            type={widget.actuatorType}
+            pinMode={widget.pinMode}
+            size="md"
+            onRemove={() => handleRemoveWidget(widget.id)}
+            onViewDetail={() => handleViewSensorDetail(widget)}
+            showControls={true}
+          />
+        );
       default:
         return null;
     }
   };
+
+  // Group widgets by type for better organization
+  const sensorWidgets = widgets.filter(widget => widget.type === 'sensor' || widget.type === 'chart');
+  const actuatorWidgets = widgets.filter(widget => widget.type === 'actuator');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-iot-soft-gray to-white dark:from-iot-dark dark:to-gray-900">
@@ -151,13 +173,29 @@ const Index = () => {
         {/* Sensor Readings Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Sensor Readings</h2>
-          {widgets.length === 0 ? (
+          {sensorWidgets.length === 0 ? (
             <div className="bg-white dark:bg-iot-dark p-8 rounded-lg text-center">
               <p className="text-gray-500">No sensors configured yet. Use the configuration section to add sensors.</p>
             </div>
           ) : (
             <BentoGrid>
-              {widgets.map(renderWidget)}
+              {sensorWidgets.map(renderWidget)}
+            </BentoGrid>
+          )}
+        </div>
+
+        <Separator className="my-6" />
+        
+        {/* Actuators Section */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4">Actuators & Controls</h2>
+          {actuatorWidgets.length === 0 ? (
+            <div className="bg-white dark:bg-iot-dark p-8 rounded-lg text-center">
+              <p className="text-gray-500">No actuators configured yet. Use the configuration section to add actuators.</p>
+            </div>
+          ) : (
+            <BentoGrid>
+              {actuatorWidgets.map(renderWidget)}
             </BentoGrid>
           )}
         </div>

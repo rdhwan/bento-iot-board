@@ -2,10 +2,12 @@
 import React, { useState, useMemo } from 'react';
 import { BentoCard } from '../BentoGrid';
 import { useMqttStore, extractValue } from '@/lib/mqtt';
-import { Gauge, TrendingUp, TrendingDown, Clock } from 'lucide-react';
+import { Gauge, TrendingUp, TrendingDown, Clock, ExternalLink, Trash, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface SensorWidgetProps {
+  id?: string;
   title: string;
   topic: string;
   valuePath?: string;
@@ -19,9 +21,13 @@ interface SensorWidgetProps {
     warning?: number;
     critical?: number;
   };
+  showControls?: boolean;
+  onRemove?: () => void;
+  onViewDetail?: () => void;
 }
 
 export function SensorWidget({
+  id,
   title,
   topic,
   valuePath,
@@ -31,7 +37,10 @@ export function SensorWidget({
   size = "md",
   className,
   formatValue,
-  thresholds = {}
+  thresholds = {},
+  showControls = false,
+  onRemove,
+  onViewDetail
 }: SensorWidgetProps) {
   const { messages, connected } = useMqttStore();
   const message = messages[topic];
@@ -89,6 +98,39 @@ export function SensorWidget({
         className
       )}
     >
+      {showControls && (
+        <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onViewDetail && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetail();
+              }}
+              title="View Details"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          )}
+          {onRemove && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+              title="Remove Widget"
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
+      
       <div className="flex flex-col h-full">
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">

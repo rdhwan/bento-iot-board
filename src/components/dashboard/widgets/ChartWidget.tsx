@@ -1,11 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { BentoCard } from '../BentoGrid';
 import { useMqttStore, extractValue } from '@/lib/mqtt';
-import { TrendingUp, Layers } from 'lucide-react';
+import { TrendingUp, Layers, ExternalLink, Trash } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface ChartWidgetProps {
+  id?: string;
   title: string;
   topic: string;
   valuePath?: string;
@@ -14,9 +17,13 @@ interface ChartWidgetProps {
   maxDataPoints?: number;
   size?: "sm" | "md" | "lg";
   className?: string;
+  showControls?: boolean;
+  onRemove?: () => void;
+  onViewDetail?: () => void;
 }
 
 export function ChartWidget({
+  id,
   title,
   topic,
   valuePath,
@@ -25,6 +32,9 @@ export function ChartWidget({
   maxDataPoints = 20,
   size = "lg",
   className,
+  showControls = false,
+  onRemove,
+  onViewDetail
 }: ChartWidgetProps) {
   const { messages, connected } = useMqttStore();
   const message = messages[topic];
@@ -62,6 +72,39 @@ export function ChartWidget({
         className
       )}
     >
+      {showControls && (
+        <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onViewDetail && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetail();
+              }}
+              title="View Details"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          )}
+          {onRemove && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+              title="Remove Widget"
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
+      
       <div className="h-full w-full flex flex-col">
         <div className="flex-grow h-full min-h-[180px]">
           {chartData.length > 0 ? (

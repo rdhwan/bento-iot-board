@@ -9,7 +9,18 @@ import { SensorWidget } from '@/components/dashboard/widgets/SensorWidget';
 import { ChartWidget } from '@/components/dashboard/widgets/ChartWidget';
 import { useMqttStore } from '@/lib/mqtt';
 import { Button } from '@/components/ui/button';
-import { Kanban } from 'lucide-react';
+import { Kanban, ChevronRight } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { toast } from "sonner";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Link, useNavigate } from 'react-router-dom';
 
 // Type definition for our dynamic widgets
 interface WidgetConfig {
@@ -24,15 +35,39 @@ interface WidgetConfig {
 const Index = () => {
   const [widgets, setWidgets] = useState<WidgetConfig[]>([]);
   const { connected } = useMqttStore();
+  const navigate = useNavigate();
+
+  // Load widgets from localStorage on component mount
+  useEffect(() => {
+    const savedWidgets = localStorage.getItem('iot-dashboard-widgets');
+    if (savedWidgets) {
+      setWidgets(JSON.parse(savedWidgets));
+    }
+  }, []);
+
+  // Save widgets to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('iot-dashboard-widgets', JSON.stringify(widgets));
+  }, [widgets]);
 
   // Function to add a new widget
   const handleAddWidget = (widgetConfig: WidgetConfig) => {
     setWidgets([...widgets, widgetConfig]);
+    toast.success(`Added ${widgetConfig.title} widget`);
   };
 
   // Function to remove a widget
   const handleRemoveWidget = (id: string) => {
-    setWidgets(widgets.filter(widget => widget.id !== id));
+    const widgetToRemove = widgets.find(w => w.id === id);
+    if (widgetToRemove) {
+      setWidgets(widgets.filter(widget => widget.id !== id));
+      toast.success(`Removed ${widgetToRemove.title} widget`);
+    }
+  };
+
+  // Function to navigate to sensor detail page
+  const handleViewSensorDetail = (widget: WidgetConfig) => {
+    navigate(`/sensor/${widget.id}`, { state: { widget } });
   };
 
   // Render the appropriate widget based on its type
@@ -42,22 +77,30 @@ const Index = () => {
         return (
           <SensorWidget
             key={widget.id}
+            id={widget.id}
             title={widget.title}
             topic={widget.topic}
             valuePath={widget.valuePath}
             unit={widget.unit}
             size="md"
+            onRemove={() => handleRemoveWidget(widget.id)}
+            onViewDetail={() => handleViewSensorDetail(widget)}
+            showControls={true}
           />
         );
       case 'chart':
         return (
           <ChartWidget
             key={widget.id}
+            id={widget.id}
             title={widget.title}
             topic={widget.topic}
             valuePath={widget.valuePath}
             unit={widget.unit}
             size="lg"
+            onRemove={() => handleRemoveWidget(widget.id)}
+            onViewDetail={() => handleViewSensorDetail(widget)}
+            showControls={true}
           />
         );
       default:
@@ -79,18 +122,45 @@ const Index = () => {
         </div>
       </header>
 
+      {/* Breadcrumb */}
+      <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>Dashboard</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
       {/* Main Content */}
       <div className="container mx-auto py-6">
-        <BentoGrid>
-          {/* Configuration Widgets */}
-          <ConnectionWidget size="md" />
-          <SubscriptionWidget size="md" />
-          <WidgetConfig size="md" onAddWidget={handleAddWidget} />
-          <PublishWidget size="md" />
-
-          {/* User-added Widgets */}
-          {widgets.map(renderWidget)}
-        </BentoGrid>
+        {/* Configuration Section */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+          <BentoGrid>
+            <ConnectionWidget size="md" />
+            <SubscriptionWidget size="md" />
+            <WidgetConfig size="md" onAddWidget={handleAddWidget} />
+            <PublishWidget size="md" />
+          </BentoGrid>
+        </div>
+        
+        <Separator className="my-6" />
+        
+        {/* Sensor Readings Section */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4">Sensor Readings</h2>
+          {widgets.length === 0 ? (
+            <div className="bg-white dark:bg-iot-dark p-8 rounded-lg text-center">
+              <p className="text-gray-500">No sensors configured yet. Use the configuration section to add sensors.</p>
+            </div>
+          ) : (
+            <BentoGrid>
+              {widgets.map(renderWidget)}
+            </BentoGrid>
+          )}
+        </div>
       </div>
     </div>
   );

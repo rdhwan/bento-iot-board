@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Kanban, ChevronRight } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { toast } from "sonner";
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -138,9 +139,12 @@ const Index = () => {
           <Kanban className="h-6 w-6 text-iot-blue" />
           <h1 className="text-xl font-bold">Bento IoT Dashboard</h1>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-          <span className="text-sm">{connected ? 'Connected' : 'Disconnected'}</span>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 mr-3">
+            <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className="text-sm">{connected ? 'Connected' : 'Disconnected'}</span>
+          </div>
+          <ThemeToggle />
         </div>
       </header>
 

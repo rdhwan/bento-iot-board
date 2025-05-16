@@ -51,9 +51,17 @@ export function WidgetConfig({ size = "md", className, onAddWidget }: WidgetConf
     // Set custom parser if provided
     if (parserFunction.trim()) {
       try {
-        // Create a parser function from the string input
-        // eslint-disable-next-line no-new-func
-        const parser = new Function('payload', `try { ${parserFunction} } catch(e) { console.error(e); return null; }`);
+        // Create a parser function from the string input with the correct type signature
+        const parser = (payload: string): any => {
+          try {
+            // eslint-disable-next-line no-new-func
+            return new Function('payload', `return (${parserFunction})`)(payload);
+          } catch(e) {
+            console.error('Parser error:', e);
+            return null;
+          }
+        };
+        
         setParser(widgetTopic, parser);
         
         toast({
@@ -145,7 +153,7 @@ export function WidgetConfig({ size = "md", className, onAddWidget }: WidgetConf
                   <SelectItem key={topic} value={topic}>{topic}</SelectItem>
                 ))
               ) : (
-                <SelectItem value="" disabled>No topics available</SelectItem>
+                <SelectItem value="no-topics" disabled>No topics available</SelectItem>
               )}
             </SelectContent>
           </Select>
